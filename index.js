@@ -22,6 +22,8 @@ module.exports = function() {
 			return callback();
 		}
 
+		var modified = false;
+
 		if (file.isBuffer()) {
 			var $ = cheerio.load(String(file.contents));
 			$('img').each(function() {
@@ -32,17 +34,19 @@ module.exports = function() {
 						var spath = path.join(file.base, ssrc);
 						var mtype = mime.lookup(spath);
 						if (mtype != 'application/octet-stream') {
-							console.log(mtype);
 							var sfile = fs.readFileSync(spath);
 							var simg64 = new Buffer(sfile).toString('base64');
 							this.attr('src', 'data:' + mtype + ';base64,' + simg64);
+							modified = true;
 						}
 					}
 				}
 			});
-			var output = $.html();
 
-			file.contents = new Buffer(output);
+			if(modified) {
+				var output = $.html();
+				file.contents = new Buffer(output);
+			}
 
 			return callback(null, file);
 		}
